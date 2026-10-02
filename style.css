@@ -1,0 +1,285 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+}
+
+.game {
+  width: min(1000px, 94%);
+  margin: 40px auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: #222;
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+form {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.beer-search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  max-height: 390px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #d5d5d5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.suggestion {
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 0;
+  background: white;
+  color: #222;
+  text-align: left;
+}
+
+.suggestion:hover,
+.suggestion:focus-visible {
+  background: #f1f1f1;
+  outline: none;
+}
+
+.suggestion img,
+.suggestion-placeholder {
+  width: 42px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #eee;
+}
+
+.suggestion-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.suggestion-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.suggestion-info strong,
+.suggestion-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-info span {
+  color: #666;
+  font-size: 14px;
+}
+
+.suggestion-meta {
+  max-width: 170px;
+  color: #777;
+  font-size: 12px;
+  text-align: right;
+}
+
+.no-results {
+  padding: 15px;
+  color: #777;
+}
+
+.message {
+  min-height: 24px;
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+.results {
+  overflow-x: auto;
+}
+
+.result-header,
+.guess-row {
+  min-width: 720px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr 1.6fr 1fr 1fr;
+  gap: 5px;
+}
+
+.result-header {
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.guess-row {
+  margin-bottom: 5px;
+}
+
+.cell {
+  min-height: 65px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: white;
+  border-radius: 5px;
+}
+
+.guess-row .cell:first-child {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.beer-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.guess-beer-image {
+  width: 38px;
+  height: 50px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.value {
+  width: 100%;
+  padding: 8px 4px;
+  border-radius: 4px;
+}
+
+.correct {
+  background: #62b36f;
+  color: white;
+}
+
+.close {
+  background: #d7a92f;
+  color: white;
+}
+
+.wrong {
+  background: #b8b8b8;
+  color: white;
+}
+
+.answer {
+  margin-top: 25px;
+  padding: 18px;
+  background: white;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  text-align: left;
+}
+
+.answer-image {
+  width: 90px;
+  height: 120px;
+  object-fit: contain;
+}
+
+.answer-name {
+  margin: 5px 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 650px) {
+  .game {
+    margin-top: 20px;
+  }
+
+  .input-row {
+    flex-direction: column;
+  }
+
+  .input-row > button {
+    width: 100%;
+  }
+
+  .suggestion-meta {
+    display: none;
+  }
+
+  .answer {
+    text-align: center;
+  }
+}
