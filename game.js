@@ -13,8 +13,6 @@ const message = document.querySelector("#message");
 const answer = document.querySelector("#answer");
 const newGameButton = document.querySelector("#new-game");
 
-// Custom beer search dropdown. Unlike a native <datalist>, this gives us
-// control over the appearance and lets us show useful beer information.
 let selectedBeer = null;
 
 function renderSuggestions(query = "") {
