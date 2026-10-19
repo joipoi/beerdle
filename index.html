@@ -1,31 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beer Wordle</title>
+  <title>Beerdle</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="game">
     <header>
       <h1>Beerdle</h1>
-      <p>Gissa ölen på 6 försök</p>
-      <p class="wrong">Grått = fel</p>
-      <p class="close">Gult = nära</p>
-      <p class="correct">Grönt = korrekt</p>
+      <p>Gissa dagens öl på 6 försök</p>
+      <details class="rules">
+        <summary>Hur spelar man?</summary>
+        <p>Sök efter en öl och gissa. Efter varje gissning ser du hur nära du var:</p>
+        <ul>
+          <li><span class="swatch correct"></span> Grönt = rätt</li>
+          <li><span class="swatch close"></span> Gult = nära (samma huvudkategori, ±1 % alkohol, ±10 kr eller ±1 på smakskalan)</li>
+          <li><span class="swatch wrong"></span> Grått = fel</li>
+          <li>↑ / ↓ = dagens öl har ett högre / lägre värde</li>
+        </ul>
+        <p>Beska, fyllighet och sötma är Systembolagets smakskala 0–12. Efter några gissningar låses ledtrådar om färg och smak upp. En ny öl varje dag!</p>
+      </details>
     </header>
 
     <section class="game-info">
-      <span id="guesses-left">6 gissningar kvar</span>
-      <button id="new-game" type="button">Nytt Spel</button>
+      <span id="day-label"></span>
+      <span id="guesses-left"></span>
     </section>
 
     <form id="guess-form" autocomplete="off">
       <label for="beer-input">Din gissning</label>
       <div class="input-row">
         <div class="beer-search">
-          <input id="beer-input" placeholder="Search for a beer..." required aria-controls="beer-suggestions" aria-expanded="false">
+          <input id="beer-input" placeholder="Sök öl eller bryggeri..." required role="combobox" aria-controls="beer-suggestions" aria-expanded="false">
           <div id="beer-suggestions" class="suggestions hidden" role="listbox"></div>
         </div>
         <button type="submit">Gissa</button>
@@ -34,22 +42,15 @@
 
     <div id="message" class="message" aria-live="polite"></div>
 
-    <section class="results">
-      <div class="result-header">
-        <span>Öl</span>
-        <span>Alkohol %</span>
-        <span>Kategori</span>
-        <span>Stil</span>
-        <span>Pris</span>
-        <span>Land</span>
-      </div>
-      <div id="guesses"></div>
-    </section>
-
     <section id="answer" class="answer hidden"></section>
+
+    <section id="clues" class="clues hidden"></section>
+
+    <section id="guesses" class="guesses"></section>
   </main>
 
   <script src="beer_data.js"></script>
+  <script src="daily_beers.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

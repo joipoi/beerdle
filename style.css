@@ -10,24 +10,62 @@ body {
 }
 
 .game {
-  width: min(1000px, 94%);
+  width: min(900px, 94%);
   margin: 40px auto;
 }
 
 header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 h1 {
   margin-bottom: 8px;
 }
 
+h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.rules {
+  max-width: 560px;
+  margin: 10px auto 0;
+  text-align: left;
+  background: white;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.rules summary {
+  cursor: pointer;
+  font-weight: bold;
+  text-align: center;
+}
+
+.rules ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+.rules li {
+  margin-bottom: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 .game-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
+  font-weight: bold;
 }
 
 button {
@@ -37,6 +75,7 @@ button {
   cursor: pointer;
   background: #222;
   color: white;
+  font-size: 16px;
 }
 
 button:disabled {
@@ -101,27 +140,28 @@ input {
   background: white;
   color: #222;
   text-align: left;
+  font-size: 14px;
 }
 
 .suggestion:hover,
-.suggestion:focus-visible {
+.suggestion:focus-visible,
+.suggestion.active {
   background: #f1f1f1;
   outline: none;
 }
 
-.suggestion img,
-.suggestion-placeholder {
+.suggestion-image {
   width: 42px;
   height: 48px;
   object-fit: contain;
-  border-radius: 4px;
-  background: #eee;
 }
 
-.suggestion-placeholder {
+.image-placeholder {
   display: grid;
   place-items: center;
   font-size: 22px;
+  background: #eee;
+  border-radius: 4px;
 }
 
 .suggestion-info {
@@ -140,7 +180,6 @@ input {
 
 .suggestion-info span {
   color: #666;
-  font-size: 14px;
 }
 
 .suggestion-meta {
@@ -161,88 +200,108 @@ input {
   font-weight: bold;
 }
 
-.results {
-  overflow-x: auto;
+.clues {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 6px;
 }
 
-.result-header,
-.guess-row {
-  min-width: 720px;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 1.6fr 1fr 1fr;
-  gap: 5px;
+.clue {
+  margin: 6px 0;
 }
 
-.result-header {
-  margin-bottom: 5px;
-  font-size: 13px;
+.clue.locked {
+  color: #999;
+}
+
+.guess {
+  margin-bottom: 14px;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+}
+
+.guess-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
   font-weight: bold;
 }
 
-.guess-row {
-  margin-bottom: 5px;
+.guess-name.correct {
+  color: #3d8a49;
 }
 
-.cell {
-  min-height: 65px;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: white;
-  border-radius: 5px;
-}
-
-.guess-row .cell:first-child {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.beer-cell-content {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 0;
-}
-
-.guess-beer-image {
-  width: 38px;
-  height: 50px;
+.guess-image {
+  width: 32px;
+  height: 42px;
   object-fit: contain;
   flex: 0 0 auto;
 }
 
-.value {
-  width: 100%;
-  padding: 8px 4px;
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.tile {
+  min-height: 64px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
   border-radius: 4px;
+  text-align: center;
+  color: white;
+  overflow-wrap: anywhere;
+}
+
+.tile-label {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.tile-value {
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .correct {
   background: #62b36f;
-  color: white;
 }
 
 .close {
   background: #d7a92f;
-  color: white;
 }
 
-.wrong {
-  background: #b8b8b8;
-  color: white;
+.wrong,
+.unknown {
+  background: #a8a8a8;
+}
+
+.guess-name.correct {
+  background: none;
 }
 
 .answer {
-  margin-top: 25px;
+  margin-bottom: 20px;
   padding: 18px;
   background: white;
   border-radius: 6px;
+  text-align: center;
+}
+
+.answer-beer {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 18px;
+  margin-bottom: 16px;
   text-align: left;
 }
 
@@ -250,12 +309,45 @@ input {
   width: 90px;
   height: 120px;
   object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.answer-title {
+  font-size: 13px;
+  color: #777;
+  text-transform: uppercase;
 }
 
 .answer-name {
   margin: 5px 0;
   font-size: 20px;
   font-weight: bold;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.stats div {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats strong {
+  font-size: 22px;
+}
+
+.stats span {
+  font-size: 12px;
+  color: #777;
+}
+
+.come-back {
+  margin-bottom: 0;
+  color: #777;
 }
 
 .hidden {
@@ -279,7 +371,12 @@ input {
     display: none;
   }
 
-  .answer {
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .answer-beer {
+    flex-direction: column;
     text-align: center;
   }
 }
