@@ -10,7 +10,7 @@
   <main class="game">
     <header>
       <h1>Beerdle</h1>
-      <p>Gissa dagens öl på 6 försök</p>
+      <p>Gissa ölen på 6 försök</p>
       <details class="rules">
         <summary>Hur spelar man?</summary>
         <p>Sök efter en öl och gissa. Efter varje gissning ser du hur nära du var:</p>
@@ -18,25 +18,28 @@
           <li><span class="swatch correct"></span> Grönt = rätt</li>
           <li><span class="swatch close"></span> Gult = nära (samma huvudkategori, ±1 % alkohol, ±10 kr eller ±1 på smakskalan)</li>
           <li><span class="swatch wrong"></span> Grått = fel</li>
-          <li>↑ / ↓ = dagens öl har ett högre / lägre värde</li>
+          <li>↑ / ↓ = rätt öl har ett högre / lägre värde</li>
         </ul>
-        <p>Beska, fyllighet och sötma är Systembolagets smakskala 0–12. Efter några gissningar låses ledtrådar om färg och smak upp. En ny öl varje dag!</p>
+        <p>Beska, fyllighet och sötma är Systembolagets smakskala 0–12. Efter några gissningar låses ledtrådar om färg och smak upp. Spela hur mycket du vill: försök igen, visa svaret eller gå vidare till nästa öl.</p>
       </details>
     </header>
 
     <section class="game-info">
-      <span id="day-label"></span>
+      <span id="round-label"></span>
       <span id="guesses-left"></span>
+    </section>
+
+    <section class="controls">
+      <button id="retry" type="button">Försök igen</button>
+      <button id="reveal" type="button">Visa svaret</button>
+      <button id="next" type="button">Nästa öl</button>
     </section>
 
     <form id="guess-form" autocomplete="off">
       <label for="beer-input">Din gissning</label>
-      <div class="input-row">
-        <div class="beer-search">
-          <input id="beer-input" placeholder="Sök öl eller bryggeri..." required role="combobox" aria-controls="beer-suggestions" aria-expanded="false">
-          <div id="beer-suggestions" class="suggestions hidden" role="listbox"></div>
-        </div>
-        <button type="submit">Gissa</button>
+      <div class="beer-search">
+        <input id="beer-input" placeholder="Börja skriva namnet på en öl eller ett bryggeri..." role="combobox" aria-controls="beer-suggestions" aria-expanded="false">
+        <div id="beer-suggestions" class="suggestions hidden" role="listbox"></div>
       </div>
     </form>
 
@@ -50,7 +53,7 @@
   </main>
 
   <script src="beer_data.js"></script>
-  <script src="daily_beers.js"></script>
+  <script src="beers_to_guess.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

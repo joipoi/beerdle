@@ -93,15 +93,20 @@ label {
   font-weight: bold;
 }
 
-.input-row {
+.controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 15px;
+}
+
+.controls button {
+  flex: 1 1 0;
+  white-space: nowrap;
 }
 
 .beer-search {
   position: relative;
-  flex: 1;
-  min-width: 0;
 }
 
 input {
@@ -345,11 +350,6 @@ input {
   color: #777;
 }
 
-.come-back {
-  margin-bottom: 0;
-  color: #777;
-}
-
 .hidden {
   display: none;
 }
@@ -359,12 +359,9 @@ input {
     margin-top: 20px;
   }
 
-  .input-row {
-    flex-direction: column;
-  }
-
-  .input-row > button {
-    width: 100%;
+  .controls button {
+    padding: 10px 8px;
+    font-size: 14px;
   }
 
   .suggestion-meta {

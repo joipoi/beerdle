@@ -1,5 +1,4 @@
 const MAX_GUESSES = 6;
-const START_DATE = "2026-10-19"; // Day #1
 const STORAGE_KEY = "beerdle";
 
 // Each guess is compared to the answer on these attributes, shown as tiles.
@@ -24,39 +23,25 @@ const STATUS_EMOJI = { correct: "🟩", close: "🟨", wrong: "⬛", unknown: "�
 
 const form = document.querySelector("#guess-form");
 const input = document.querySelector("#beer-input");
-const submitButton = form.querySelector("button[type=submit]");
 const suggestions = document.querySelector("#beer-suggestions");
 const guessesContainer = document.querySelector("#guesses");
 const guessesLeft = document.querySelector("#guesses-left");
-const dayLabel = document.querySelector("#day-label");
+const roundLabel = document.querySelector("#round-label");
 const message = document.querySelector("#message");
 const cluesContainer = document.querySelector("#clues");
 const answer = document.querySelector("#answer");
+const retryButton = document.querySelector("#retry");
+const revealButton = document.querySelector("#reveal");
+const nextButton = document.querySelector("#next");
 
 const beersById = new Map(beers.map(beer => [beer.productId, beer]));
 
-// "?dag=5" plays day 5 without saving anything, handy for testing and demos.
-const dayOverride = Number(new URLSearchParams(location.search).get("dag")) || null;
-const dayNumber = dayOverride || getTodayNumber();
-const targetBeer = getDailyBeer(dayNumber);
-
+let beerIndex = 0;     // Position in beers_to_guess of the beer being guessed.
+let targetBeer = null;
 let guesses = [];
 let gameOver = false;
-let selectedBeer = null;
+let revealed = false;  // True when the player gave up and asked for the answer.
 let activeSuggestion = -1;
-
-// ---------- Daily beer ----------
-
-// Day number in Swedish time, so the beer changes at midnight in Sweden.
-function getTodayNumber() {
-  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
-  return Math.round((Date.parse(today) - Date.parse(START_DATE)) / 86400000) + 1;
-}
-
-function getDailyBeer(day) {
-  const index = (((day - 1) % daily_beers.length) + daily_beers.length) % daily_beers.length;
-  return beersById.get(String(daily_beers[index]));
-}
 
 // ---------- Saved progress and stats ----------
 
@@ -69,7 +54,6 @@ function loadState() {
 }
 
 function saveState(state) {
-  if (dayOverride) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
@@ -78,13 +62,11 @@ function saveState(state) {
 }
 
 function getStats() {
-  const stats = { played: 0, wins: 0, streak: 0, maxStreak: 0, lastWonDay: null, ...loadState().stats };
-  if (stats.lastWonDay !== dayNumber && stats.lastWonDay !== dayNumber - 1) stats.streak = 0;
-  return stats;
+  return { played: 0, wins: 0, streak: 0, maxStreak: 0, ...loadState().stats };
 }
 
 function saveProgress() {
-  saveState({ ...loadState(), day: dayNumber, guesses: guesses.map(beer => beer.productId) });
+  saveState({ ...loadState(), index: beerIndex, guesses: guesses.map(beer => beer.productId), revealed });
 }
 
 function recordResult(won) {
@@ -94,7 +76,6 @@ function recordResult(won) {
     stats.wins++;
     stats.streak++;
     stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
-    stats.lastWonDay = dayNumber;
   } else {
     stats.streak = 0;
   }
@@ -115,19 +96,26 @@ function getImage(beer, className) {
 
 function findMatches(query) {
   const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
   return beers
     .filter(beer => !guesses.includes(beer))
-    .filter(beer => !normalized ||
+    .filter(beer =>
       getBeerName(beer).toLowerCase().includes(normalized) ||
       beer.producerName?.toLowerCase().includes(normalized))
     .slice(0, 12);
 }
 
+// The list only shows once the player has started typing.
 function renderSuggestions(query = "") {
-  const matches = findMatches(query);
   suggestions.innerHTML = "";
   activeSuggestion = -1;
 
+  if (!query.trim()) {
+    setSuggestionsOpen(false);
+    return;
+  }
+
+  const matches = findMatches(query);
   if (!matches.length) {
     suggestions.innerHTML = `<div class="no-results">Inga öl hittades</div>`;
   }
@@ -145,8 +133,9 @@ function renderSuggestions(query = "") {
       </span>
       <span class="suggestion-meta">${escapeHtml(beer.categoryLevel3 || beer.categoryLevel2 || "")}</span>
     `;
+    // Picking a beer guesses it straight away.
     item.addEventListener("click", () => {
-      selectBeer(beer);
+      makeGuess(beer);
       input.focus();
     });
     item.beer = beer;
@@ -169,17 +158,8 @@ function setActiveSuggestion(index) {
   items[activeSuggestion].scrollIntoView({ block: "nearest" });
 }
 
-function selectBeer(beer) {
-  selectedBeer = beer;
-  input.value = getBeerName(beer);
-  setSuggestionsOpen(false);
-}
-
 input.addEventListener("focus", () => renderSuggestions(input.value));
-input.addEventListener("input", () => {
-  selectedBeer = null;
-  renderSuggestions(input.value);
-});
+input.addEventListener("input", () => renderSuggestions(input.value));
 
 input.addEventListener("keydown", event => {
   const open = !suggestions.classList.contains("hidden");
@@ -189,7 +169,7 @@ input.addEventListener("keydown", event => {
     setActiveSuggestion(activeSuggestion + (event.key === "ArrowDown" ? 1 : -1));
   } else if (event.key === "Enter" && open && activeSuggestion >= 0) {
     event.preventDefault();
-    selectBeer(suggestions.querySelectorAll(".suggestion")[activeSuggestion].beer);
+    makeGuess(suggestions.querySelectorAll(".suggestion")[activeSuggestion].beer);
   } else if (event.key === "Escape") {
     setSuggestionsOpen(false);
   }
@@ -201,38 +181,42 @@ document.addEventListener("click", event => {
 
 // ---------- Guessing ----------
 
+// Pressing Enter without picking from the list accepts an exact name,
+// or the only remaining match for what was typed.
 form.addEventListener("submit", event => {
   event.preventDefault();
-  if (gameOver) return;
-
-  // Accept an exact name, or the only remaining match for what was typed.
-  const matches = findMatches(input.value);
-  const guessedBeer = selectedBeer ||
-    beers.find(beer => getBeerName(beer).toLowerCase() === input.value.trim().toLowerCase()) ||
-    (input.value.trim() && matches.length === 1 ? matches[0] : null);
+  const query = input.value.trim().toLowerCase();
+  const matches = findMatches(query);
+  const guessedBeer =
+    beers.find(beer => getBeerName(beer).toLowerCase() === query) ||
+    (matches.length === 1 ? matches[0] : null);
 
   if (!guessedBeer) {
     showMessage("Välj en öl från listan");
     return;
   }
+  makeGuess(guessedBeer);
+});
 
-  if (guesses.includes(guessedBeer)) {
+function makeGuess(beer) {
+  if (gameOver) return;
+  if (guesses.includes(beer)) {
     showMessage("Du har redan gissat på den ölen");
     return;
   }
 
-  addGuess(guessedBeer);
+  addGuess(beer);
+  updateControls();
   saveProgress();
 
   if (gameOver) {
-    recordResult(guessedBeer === targetBeer);
+    recordResult(beer === targetBeer);
     renderStats();
   }
 
   input.value = "";
-  selectedBeer = null;
   setSuggestionsOpen(false);
-});
+}
 
 function addGuess(beer) {
   guesses.push(beer);
@@ -316,29 +300,30 @@ function updateGuessesLeft() {
 function endGame(won) {
   gameOver = true;
   input.disabled = true;
-  submitButton.disabled = true;
+  setSuggestionsOpen(false);
   renderClues();
+  updateControls();
 
   showMessage(won
     ? `Snyggt! Du klarade det på ${guesses.length} gissning${guesses.length === 1 ? "" : "ar"}.`
-    : "Tyvärr, slut på gissningar.");
+    : revealed ? "Här är svaret." : "Tyvärr, slut på gissningar.");
 
   answer.classList.remove("hidden");
   answer.innerHTML = `
     <div class="answer-beer">
       ${getImage(targetBeer, "answer-image")}
       <div>
-        <div class="answer-title">Dagens öl</div>
+        <div class="answer-title">Rätt svar</div>
         <div class="answer-name">${escapeHtml(getBeerName(targetBeer))}</div>
         <div>${escapeHtml(targetBeer.categoryLevel3)} · ${formatNumber(targetBeer.alcoholPercentage)} % · ${escapeHtml(targetBeer.country)}</div>
       </div>
     </div>
     <button id="share" type="button">Dela resultat</button>
     <div id="stats" class="stats"></div>
-    <p class="come-back">${dayOverride ? "Övningsläge, resultatet sparas inte." : "Kom tillbaka i morgon för en ny öl!"}</p>
   `;
 
   answer.querySelector("#share").addEventListener("click", shareResult);
+  renderStats();
 }
 
 function renderStats() {
@@ -355,7 +340,8 @@ function renderStats() {
 function getShareText() {
   const won = guesses.includes(targetBeer);
   const rows = guesses.map(beer => getResults(beer).map(result => STATUS_EMOJI[result.status]).join(""));
-  return `Beerdle #${dayNumber} ${won ? guesses.length : "X"}/${MAX_GUESSES}\n\n${rows.join("\n")}\n${location.origin}${location.pathname}`;
+  const score = won ? `${guesses.length}/${MAX_GUESSES}` : revealed ? "gav upp" : `X/${MAX_GUESSES}`;
+  return `Beerdle öl #${beerIndex + 1} ${score}\n\n${rows.join("\n")}\n${location.origin}${location.pathname}?nr=${beerIndex + 1}`;
 }
 
 async function shareResult() {
@@ -388,22 +374,74 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ---------- Start ----------
+// ---------- Rounds: retry, reveal and next ----------
 
-function startGame() {
-  dayLabel.textContent = `Beerdle #${dayNumber}${dayOverride ? " (övning)" : ""}`;
+// Starts guessing beer number `index` in beers_to_guess, optionally replaying saved guesses.
+function startRound(index, savedGuesses = [], savedRevealed = false) {
+  beerIndex = ((index % beers_to_guess.length) + beers_to_guess.length) % beers_to_guess.length;
+  targetBeer = beersById.get(String(beers_to_guess[beerIndex]));
+  guesses = [];
+  gameOver = false;
+  revealed = false;
+
+  guessesContainer.innerHTML = "";
+  answer.classList.add("hidden");
+  answer.innerHTML = "";
+  input.disabled = false;
+  input.value = "";
+  setSuggestionsOpen(false);
+  showMessage("");
+
+  roundLabel.textContent = `Öl ${beerIndex + 1} av ${beers_to_guess.length}`;
   updateGuessesLeft();
   renderClues();
 
-  // Restore today's guesses if the page was reloaded.
-  const saved = loadState();
-  if (!dayOverride && saved.day === dayNumber) {
-    for (const id of saved.guesses || []) {
-      const beer = beersById.get(id);
-      if (beer && !gameOver) addGuess(beer);
-    }
-    if (gameOver) renderStats();
+  // Replaying saved guesses doesn't count towards the stats again.
+  for (const id of savedGuesses) {
+    const beer = beersById.get(id);
+    if (beer && !gameOver) addGuess(beer);
   }
+  if (savedRevealed && !gameOver) {
+    revealed = true;
+    endGame(false);
+  }
+
+  updateControls();
+  saveProgress();
 }
 
-startGame();
+function updateControls() {
+  retryButton.disabled = !guesses.length && !gameOver;
+  revealButton.disabled = gameOver;
+}
+
+retryButton.addEventListener("click", () => startRound(beerIndex));
+nextButton.addEventListener("click", () => startRound(beerIndex + 1));
+
+revealButton.addEventListener("click", () => {
+  if (gameOver) return;
+  revealed = true;
+  recordResult(false);
+  endGame(false);
+  saveProgress();
+});
+
+// ---------- Start ----------
+
+// "?nr=5" jumps straight to beer number 5 in beers_to_guess, handy for testing and sharing.
+const requestedNumber = Number(new URLSearchParams(location.search).get("nr"));
+const saved = loadState();
+// Saves from the old daily version have no index, so their guesses are for some other beer.
+const hasSavedRound = Number.isInteger(saved.index);
+
+if (requestedNumber) {
+  const index = requestedNumber - 1;
+  const sameRound = hasSavedRound && saved.index === index;
+  startRound(index, sameRound ? saved.guesses : [], sameRound && saved.revealed);
+  // Drop "?nr" so a reload after pressing "Nästa öl" doesn't jump back.
+  history.replaceState(null, "", location.pathname);
+} else if (hasSavedRound) {
+  startRound(saved.index, saved.guesses || [], saved.revealed);
+} else {
+  startRound(0);
+}
